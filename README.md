@@ -45,10 +45,11 @@ Agora.configure do |config|
   # 7：华为云 OBS
   # 8：百度智能云 BOS
   config.oss_vendor = 2 # 例如 2 表示阿里云 OSS，1 表示 Amazon S3
-  config.oss_region = 1 # 区域编号，具体见官方文档
+  config.oss_region = 1 # 区域编号，具体见官方文档 https://doc.shengwang.cn/doc/cloud-recording/restful/api/reference
   config.oss_bucket = '你的云存储 bucket 名称'
   config.oss_access_key = '你的云存储 Access Key'
   config.oss_secret_key = '你的云存储 Secret Key'
+  config.oss_filename_prefix = ["directory1","directory2"] # 录制文件在第三方云存储中的存储位置, directory1/directory2/xxx.m3u8
 end
 ```
 
@@ -65,14 +66,14 @@ end
 ```ruby
 # 确保已完成上述配置
 
+
+begin
 client = Agora::CloudRecording::Client.new
 
 cname = "live-chat-123"
-recording_bot_uid = "recording_bot_uid_#{SecureRandom.hex(4)}" # 录制机器人 UID，需唯一
-user_to_record_uid = "user_uid_to_record" # 需要录制的用户 UID
-my_uid = "your_own_broadcaster_uid"       # 你的 UID
-
-begin
+recording_bot_uid = "123" # 录制机器人 UID，需唯一
+user_to_record_uid = "223" # 需要录制的用户 UID
+my_uid = "123"       # 你的 UID
   # 1. 获取录制资源 resourceId
   # acquire 的 clientRequest 可为空，除非有特殊需求
   puts "获取录制资源..."
@@ -82,15 +83,16 @@ begin
 
   # 2. 启动录制
   # 你需要为 recording_bot_uid 生成一个有效的声网 Token（可用你自己的 Token 服务）
-  agora_token = "RECORDING_BOT_UID 对应的声网 Token"
+  agora_token = "007eJxTYDi9mKPrecoyD++iss2H8s5s/yATGWE30bJbf9fc40q9nKcUGBJNjNNM0gzNDFIsLExMTZOTDBMNTU1MTZLMTY0MEg3MfA4rZjQEMjKEnp7BzMgAgSA+L0NOZlmqbnJGYomuoZExAwMAfGEhnA=="
 
   recording_config = {
     maxIdleTime: 60, # 可选，录制空闲超时时间
     streamTypes: 2,  # 录制音视频
     channelType: 1,  # 直播模式
+    audioProfile: 2, # 音乐编码，双声道，编码码率约 192 Kbps。
     # 只录制指定用户的视频，和你与用户的音频
-    subscribeVideoUids: [user_to_record_uid],
-    subscribeAudioUids: [user_to_record_uid, my_uid],
+    subscribeVideoUids: [ "#allstream#"],
+    subscribeAudioUids: [ "#allstream#"],
     # 如需自定义合流布局，可参考 transcodingConfig，详见官方文档
     # transcodingConfig: {...}
     # audioProfile: 1, # 可选，音频质量
@@ -113,8 +115,7 @@ begin
     agora_token,
     'mix', # 合流录制，若需单流录制可用 'individual'
     recording_config,
-    recording_file_config,
-    storage_config
+    recording_file_config
   )
   sid = start_response["sid"] # 录制会话 ID
   puts "录制已启动，SID: #{sid}"
@@ -135,7 +136,7 @@ begin
   puts "停止结果: #{stop_response}"
   # 文件上传 OSS 可能有延迟，可通过 stop_response["serverResponse"]["fileList"] 获取文件列表
 
-  puts "录制流程结束，请到 OSS 查看文件: #{Agora.configuration.oss_bucket}/#{storage_config[:fileNamePrefix].join('/')}"
+  puts "录制流程结束，请到 OSS 查看文件: #{Agora.config.oss_bucket}/#{storage_config[:fileNamePrefix].join('/')}"
 
 rescue Agora::Errors::ConfigurationError => e
   puts "配置错误: #{e.message}"

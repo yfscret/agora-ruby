@@ -7,7 +7,7 @@ module Agora
       include HTTParty
       # base_uri 通过 Agora.config.base_url 设置
 
-      attr_reader :app_id, :customer_id, :customer_certificate, :oss_vendor, :oss_region, :oss_bucket, :oss_access_key, :oss_secret_key
+      attr_reader :app_id, :customer_id, :customer_certificate, :oss_vendor, :oss_region, :oss_bucket, :oss_access_key, :oss_secret_key, :oss_filename_prefix
 
       def initialize
         @config = Agora.config # 使用 Agora.config 获取配置实例
@@ -28,6 +28,7 @@ module Agora
         @oss_bucket = @config.oss_bucket
         @oss_access_key = @config.oss_access_key
         @oss_secret_key = @config.oss_secret_key
+        @oss_filename_prefix = @config.oss_filename_prefix
       end
 
       def acquire(cname, uid, client_request = {})
@@ -55,7 +56,7 @@ module Agora
           bucket: @oss_bucket,
           accessKey: @oss_access_key,
           secretKey: @oss_secret_key,
-          fileNamePrefix: ["recordings", cname, Date.today.to_s]
+          fileNamePrefix: @oss_filename_prefix
         }
 
         body = {

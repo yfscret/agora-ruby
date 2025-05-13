@@ -1,4 +1,5 @@
 require "bundler/setup"
+require_relative '../lib/agora-ruby' # Load the library entry point
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
