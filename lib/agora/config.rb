@@ -1,6 +1,6 @@
 module Agora
   class Config
-    attr_accessor :app_id, :customer_id, :customer_certificate,
+    attr_accessor :app_id, :customer_key, :customer_secret,
                   :oss_vendor, :oss_region, :oss_bucket,
                   :oss_access_key, :oss_secret_key,
                   :base_url, :oss_filename_prefix

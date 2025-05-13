@@ -7,11 +7,11 @@ module Agora
       include HTTParty
       # base_uri 通过 Agora.config.base_url 设置
 
-      attr_reader :app_id, :customer_id, :customer_certificate, :oss_vendor, :oss_region, :oss_bucket, :oss_access_key, :oss_secret_key, :oss_filename_prefix
+      attr_reader :app_id, :customer_key, :customer_secret, :oss_vendor, :oss_region, :oss_bucket, :oss_access_key, :oss_secret_key, :oss_filename_prefix
 
       def initialize
         @config = Agora.config # 使用 Agora.config 获取配置实例
-        unless @config && @config.app_id && @config.customer_id && @config.customer_certificate
+        unless @config && @config.app_id && @config.customer_key && @config.customer_secret
           raise Agora::Errors::ConfigurationError, "声网 App ID, Customer ID, 和 Customer Certificate 必须配置。"
         end
         unless @config.oss_bucket && @config.oss_access_key && @config.oss_secret_key && @config.oss_region && @config.oss_vendor
@@ -21,8 +21,8 @@ module Agora
         self.class.base_uri @config.base_url # 设置 base_uri
 
         @app_id = @config.app_id
-        @customer_id = @config.customer_id
-        @customer_certificate = @config.customer_certificate
+        @customer_key = @config.customer_key
+        @customer_secret = @config.customer_secret
         @oss_vendor = @config.oss_vendor
         @oss_region = @config.oss_region
         @oss_bucket = @config.oss_bucket
@@ -101,7 +101,7 @@ module Agora
       private
 
       def basic_auth_header
-        "Basic " + Base64.strict_encode64("#{@customer_id}:#{@customer_certificate}")
+        "Basic " + Base64.strict_encode64("#{@customer_key}:#{@customer_secret}")
       end
 
       def handle_response(response)

@@ -9,7 +9,7 @@
 在你的 Gemfile 中添加：
 
 ```ruby
-gem 'agora-ruby' # 发布到 RubyGems 后可直接使用
+gem 'agora-ruby'
 ```
 
 然后执行：
@@ -21,7 +21,7 @@ $ bundle install
 或者直接安装：
 
 ```bash
-$ gem install agora-ruby # 发布后可直接安装
+$ gem install agora-ruby
 ```
 
 ## 配置
@@ -32,8 +32,8 @@ $ gem install agora-ruby # 发布后可直接安装
 Agora.configure do |config|
   # 声网相关配置（必填）
   config.app_id = '你的声网 App ID'
-  config.customer_id = '你的声网客户 ID'
-  config.customer_certificate = '你的声网客户密钥'
+  config.customer_key = '你的声网 RESTFUL API 客户 ID'
+  config.customer_secret = '你的声网 RESTFUL API 客户密钥'
 
   # 第三方云存储平台配置（必填，vendor 需根据实际平台填写）
   # 支持的 vendor 及编号如下：
@@ -44,7 +44,7 @@ Agora.configure do |config|
   # 6：谷歌云 GCS
   # 7：华为云 OBS
   # 8：百度智能云 BOS
-  config.oss_vendor = 2 # 例如 2 表示阿里云 OSS，1 表示 Amazon S3
+  config.oss_vendor = 2 # 2 表示阿里云 OSS
   config.oss_region = 1 # 区域编号，具体见官方文档 https://doc.shengwang.cn/doc/cloud-recording/restful/api/reference
   config.oss_bucket = '你的云存储 bucket 名称'
   config.oss_access_key = '你的云存储 Access Key'
@@ -65,15 +65,13 @@ end
 
 ```ruby
 # 确保已完成上述配置
-
-
 begin
-client = Agora::CloudRecording::Client.new
+  client = Agora::CloudRecording::Client.new
+  cname = "live-chat-123"
+  my_uid = "1888"       # 你的 UID
+  recording_bot_uid = "#{my_uid}#{rand(1000)}" # 录制机器人 UID，需唯一
+  record_uid = "110560" # 需要录制的用户 UID
 
-cname = "live-chat-123"
-recording_bot_uid = "123" # 录制机器人 UID，需唯一
-user_to_record_uid = "223" # 需要录制的用户 UID
-my_uid = "123"       # 你的 UID
   # 1. 获取录制资源 resourceId
   # acquire 的 clientRequest 可为空，除非有特殊需求
   puts "获取录制资源..."
@@ -81,30 +79,36 @@ my_uid = "123"       # 你的 UID
   resource_id = acquire_response["resourceId"]
   puts "resourceId: #{resource_id}"
 
-  # 2. 启动录制
+  # 2. 获取 token
   # 你需要为 recording_bot_uid 生成一个有效的声网 Token（可用你自己的 Token 服务）
-  agora_token = "007eJxTYDi9mKPrecoyD++iss2H8s5s/yATGWE30bJbf9fc40q9nKcUGBJNjNNM0gzNDFIsLExMTZOTDBMNTU1MTZLMTY0MEg3MfA4rZjQEMjKEnp7BzMgAgSA+L0NOZlmqbnJGYomuoZExAwMAfGEhnA=="
+  app_id = 'xxxxxxx'
+  app_certificate = 'xxxxxxxx'
+  token_expiration_in_seconds = 3600 * 24
+  privilege_expiration_in_seconds = 3600 * 24
+  token = Agora::AgoraDynamicKey2::RtcTokenBuilder.build_token_with_uid(
+    app_id, app_certificate, cname, recording_bot_uid,
+    Agora::AgoraDynamicKey2::RtcTokenBuilder::ROLE_PUBLISHER,
+    token_expiration_in_seconds, privilege_expiration_in_seconds
+  )
 
+  # 3. 启动录制
   recording_config = {
-    maxIdleTime: 60, # 可选，录制空闲超时时间
     streamTypes: 2,  # 录制音视频
     channelType: 1,  # 直播模式
-    audioProfile: 2, # 音乐编码，双声道，编码码率约 192 Kbps。
+    audioProfile: 2, # 音频质量, 音频编码，双声道，编码码率约 192 Kbps。
     # 只录制指定用户的视频，和你与用户的音频
-    subscribeVideoUids: [ "#allstream#"],
-    subscribeAudioUids: [ "#allstream#"],
-    # 如需自定义合流布局，可参考 transcodingConfig，详见官方文档
-    # transcodingConfig: {...}
-    # audioProfile: 1, # 可选，音频质量
+    subscribeVideoUids: [record_uid],
+    subscribeAudioUids: [my_uid, record_uid],
+    transcodingConfig: {
+      width: 720,
+      height: 1280,
+      bitrate: 3420,
+      fps: 30
+    }
   }
 
   recording_file_config = {
     avFileType: ["hls", "mp4"] # 同时录制 HLS 和 MP4
-  }
-
-  # 可自定义 OSS 路径前缀，默认 ["recordings", cname, Date.today.to_s]
-  storage_config = {
-    fileNamePrefix: ["session_recordings", cname, user_to_record_uid]
   }
 
   puts "启动录制..."
@@ -112,7 +116,7 @@ my_uid = "123"       # 你的 UID
     resource_id,
     cname,
     recording_bot_uid,
-    agora_token,
+    token,
     'mix', # 合流录制，若需单流录制可用 'individual'
     recording_config,
     recording_file_config
@@ -121,22 +125,21 @@ my_uid = "123"       # 你的 UID
   puts "录制已启动，SID: #{sid}"
 
   # 录制中（实际业务中可根据需求控制时长）
-  puts "录制中，模拟 60 秒..."
-  sleep 60
+  puts "录制中..."
 
-  # 3. 可选：查询录制状态
+  # 4. 可选：查询录制状态
   puts "查询录制状态..."
   query_response = client.query(resource_id, sid)
   puts "状态查询结果: #{query_response}"
   # 可根据 query_response["serverResponse"]["status"] 判断录制状态
 
-  # 4. 停止录制
+  # 5. 停止录制
   puts "停止录制..."
-  stop_response = client.stop(resource_id, sid, cname, recording_bot_uid)
+  stop_response = client.stop(resource_id, sid, cname, recording_bot_uid, 'mix', client_request = { async_stop: true })
   puts "停止结果: #{stop_response}"
   # 文件上传 OSS 可能有延迟，可通过 stop_response["serverResponse"]["fileList"] 获取文件列表
 
-  puts "录制流程结束，请到 OSS 查看文件: #{Agora.config.oss_bucket}/#{storage_config[:fileNamePrefix].join('/')}"
+  puts "录制流程结束，请到 OSS 查看文件: #{Agora.config.oss_bucket}/#{stop_response["serverResponse"]["fileList"][0]['fileName']}"
 
 rescue Agora::Errors::ConfigurationError => e
   puts "配置错误: #{e.message}"

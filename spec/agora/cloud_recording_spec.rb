@@ -3,8 +3,8 @@ require 'webmock/rspec' # 用于 stub HTTP 请求
 
 RSpec.describe Agora::CloudRecording::Client do
   let(:app_id) { 'test_app_id' } # 替换为虚拟 App ID
-  let(:customer_id) { 'test_customer_id' }
-  let(:customer_certificate) { 'test_customer_cert' }
+  let(:customer_key) { 'test_customer_key' }
+  let(:customer_secret) { 'test_customer_cert' }
   let(:base_url) { 'https://api.agora.io' } # 假设的基础 URL
   let(:oss_vendor) { 1 } # 假设 OSS 类型 (e.g., 1 for Alibaba)
   let(:oss_region) { 'cn-hangzhou' }
@@ -23,8 +23,8 @@ RSpec.describe Agora::CloudRecording::Client do
   let(:agora_config) do
     instance_double(Agora::Config,
                     app_id: app_id,
-                    customer_id: customer_id,
-                    customer_certificate: customer_certificate,
+                    customer_key: customer_key,
+                    customer_secret: customer_secret,
                     base_url: base_url,
                     oss_vendor: oss_vendor,
                     oss_region: oss_region,
@@ -51,7 +51,7 @@ RSpec.describe Agora::CloudRecording::Client do
     it 'initializes with valid config' do
       expect { client }.not_to raise_error
       expect(client.app_id).to eq(app_id)
-      expect(client.customer_id).to eq(customer_id)
+      expect(client.customer_key).to eq(customer_key)
       # ... 可以添加更多属性检查
     end
 
