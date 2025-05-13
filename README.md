@@ -166,7 +166,7 @@ end
 *   `query(resource_id, sid, mode = 'mix')`：查询录制状态。
 *   `stop(resource_id, sid, cname, uid, mode = 'mix', client_request = {})`：停止录制。
 
-详细参数和更多高级用法请参考 [声网云端录制 RESTful API 文档](https://doc.shengwang.cn/doc/cloud-recording/restful/cloud-recording/overview)。
+详细参数和更多高级用法请参考 [声网云端录制 RESTful API 文档](https://doc.shengwang.cn/doc/cloud-recording/restful/cloud-recording/operations/post-v1-apps-appid-cloud_recording-acquire)。
 
 ## 开发与贡献
 
