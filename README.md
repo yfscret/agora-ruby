@@ -83,8 +83,8 @@ begin
   # 你需要为 recording_bot_uid 生成一个有效的声网 Token（可用你自己的 Token 服务）
   app_id = 'xxxxxxx'
   app_certificate = 'xxxxxxxx'
-  token_expiration_in_seconds = 3600 * 24
-  privilege_expiration_in_seconds = 3600 * 24
+  token_expiration_in_seconds = 3600
+  privilege_expiration_in_seconds = 3600
   token = Agora::AgoraDynamicKey2::RtcTokenBuilder.build_token_with_uid(
     app_id, app_certificate, cname, recording_bot_uid,
     Agora::AgoraDynamicKey2::RtcTokenBuilder::ROLE_PUBLISHER,
@@ -108,7 +108,7 @@ begin
   }
 
   recording_file_config = {
-    avFileType: ["hls", "mp4"] # 同时录制 HLS 和 MP4
+    avFileType: %w[hls mp4] # 同时录制 HLS 和 MP4
   }
 
   puts "启动录制..."
@@ -135,7 +135,7 @@ begin
 
   # 5. 停止录制
   puts "停止录制..."
-  stop_response = client.stop(resource_id, sid, cname, recording_bot_uid, 'mix', client_request = { async_stop: true })
+  stop_response = client.stop(resource_id, sid, cname, recording_bot_uid, 'mix', { async_stop: true })
   puts "停止结果: #{stop_response}"
   # 文件上传 OSS 可能有延迟，可通过 stop_response["serverResponse"]["fileList"] 获取文件列表
 
